@@ -59,13 +59,14 @@ public class MatrixRunner
       jppfClient = new JPPFClient();
 	  JSONArray array;
 	  JSONArray array2;
-	  if ((args != null) && (args.length > 1))
-	  {	
+	  String input1 = "[{\"0\":44, \"1\":22}, {\"0\":1, \"1\":3}]";
+	  String input2 = "[{\"0\":10, \"1\":44}, {\"0\":2, \"1\":6}]";
+	  
 		output("Heeello");
 		//here is the JSON with the matrix values
-		Object obj=JSONValue.parse(args[0]);
+		Object obj=JSONValue.parse(input1);
 		array=(JSONArray)obj;
-		Object obj2=JSONValue.parse(args[1]);
+		Object obj2=JSONValue.parse(input2);
 		array2=(JSONArray)obj2;
 		  
 		  //Get the single elements of the JSON and thus be able to find out number of rows and columns
@@ -75,10 +76,13 @@ public class MatrixRunner
 		  double[][] values2; //values of second matrix
 		  int rows1 = array.size();
 		  int rows2 = array2.size();
+		  output("rows1: " + rows1 + "rows2: " + rows2);
 		  JSONObject j1 = (JSONObject)array.get(0);
 		  JSONObject j2 = (JSONObject)array2.get(0);
+		  output("j1: " + j1 + "j2: " + j2);
 		  int cols1 = j1.size();	  
 		  int cols2 = j2.size();
+		  output("cols1: " + cols1 + "cols2: " + cols2);
 		  values1 = new double[rows1][cols1];
 		  values2 = new double[rows2][cols2];
 		  for(int i = 0; i < rows1; i++)
@@ -86,8 +90,16 @@ public class MatrixRunner
 			for(int j = 0; j < cols1; j++)
 			{
 				JSONObject thisRow = (JSONObject)array.get(i);
-				//String elem = String.valueOf(j);
-				values1[i][j] = (double)thisRow.get(j);
+				output("row: " + thisRow);
+				String js = String.valueOf(j);
+				String bla = thisRow.get(js).toString();
+				//output(bla);
+				double valueOf = Double.parseDouble(bla);
+				//output(String.valueOf(valueOf));
+				//long thisValuef = (long)thisRow.get(js);
+				//double thisValue = thisValuef.doubleValue();
+				//output("value: " + thisValue);
+				values1[i][j] = valueOf;
 				
 			}
 		  }
@@ -96,8 +108,12 @@ public class MatrixRunner
 			for(int j = 0; j < cols2; j++)
 			{
 				JSONObject thisRow = (JSONObject)array.get(i);
-				//String elem = String.valueOf(j);
-				values2[i][j] = (double)thisRow.get(j);
+				output("row: " + thisRow);
+				String js = String.valueOf(j);
+				String bla = thisRow.get(js).toString();
+				//output(bla);
+				double valueOf = Double.parseDouble(bla);
+				values2[i][j] = valueOf;
 			}
 		  }
 		  
@@ -110,12 +126,7 @@ public class MatrixRunner
 		  int nbRows = props.getInt("task.nbRows", 1);
 		  output("Running Matrix demo with matrix size = "+size+"*"+size+" for "+iterations+" iterations");
 		  perform(values1, values2, iterations, nbRows);
-	 }
-	 else
-	 {	
-		//do nothing
-		output("No input! Provide 2 matrices to multiply.");
-	 }
+	 
     }
     catch(Exception e)
     {
