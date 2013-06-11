@@ -57,28 +57,65 @@ public class MatrixRunner
     {
       //if ((args != null) && (args.length > 0)) jppfClient = new JPPFClient(args[0]);
       jppfClient = new JPPFClient();
-	  if ((args != null) && (args.length > 0))
-	  {
+	  JSONArray array;
+	  JSONArray array2;
+	  if ((args != null) && (args.length > 1))
+	  {	
+		output("Heeello");
 		//here is the JSON with the matrix values
 		Object obj=JSONValue.parse(args[0]);
-		JSONArray array=(JSONArray)obj;
-	  }
-	  for(int i = 0; i < values.rows(); i++)
-	  {
-			for(int j = 0; j < values.cols(); j++)
+		array=(JSONArray)obj;
+		Object obj2=JSONValue.parse(args[1]);
+		array2=(JSONArray)obj2;
+		  
+		  //Get the single elements of the JSON and thus be able to find out number of rows and columns
+		  //
+		  //
+		  double[][] values1; //values of first matrix
+		  double[][] values2; //values of second matrix
+		  int rows1 = array.size();
+		  int rows2 = array2.size();
+		  JSONObject j1 = (JSONObject)array.get(0);
+		  JSONObject j2 = (JSONObject)array2.get(0);
+		  int cols1 = j1.size();	  
+		  int cols2 = j2.size();
+		  values1 = new double[rows1][cols1];
+		  values2 = new double[rows2][cols2];
+		  for(int i = 0; i < rows1; i++)
+		  {
+			for(int j = 0; j < cols1; j++)
 			{
-				values[i][j] = array.get(i+j);
+				JSONObject thisRow = (JSONObject)array.get(i);
+				//String elem = String.valueOf(j);
+				values1[i][j] = (double)thisRow.get(j);
+				
 			}
-	  }
-      TypedProperties props = JPPFConfiguration.getProperties();
-	  //how big is the matrix
-      int size = props.getInt("matrix.size", 300);
-	  //how many times to calculate
-      int iterations = props.getInt("matrix.iterations", 10);
-	  //number of rows of matrix a per task
-      int nbRows = props.getInt("task.nbRows", 1);
-      output("Running Matrix demo with matrix size = "+size+"*"+size+" for "+iterations+" iterations");
-      perform(array, iterations, nbRows);
+		  }
+		  for(int i = 0; i < rows2; i++)
+		  {
+			for(int j = 0; j < cols2; j++)
+			{
+				JSONObject thisRow = (JSONObject)array.get(i);
+				//String elem = String.valueOf(j);
+				values2[i][j] = (double)thisRow.get(j);
+			}
+		  }
+		  
+		  TypedProperties props = JPPFConfiguration.getProperties();
+		  //how big is the matrix
+		  int size = props.getInt("matrix.size", 300);
+		  //how many times to calculate
+		  int iterations = props.getInt("matrix.iterations", 10);
+		  //number of rows of matrix a per task
+		  int nbRows = props.getInt("task.nbRows", 1);
+		  output("Running Matrix demo with matrix size = "+size+"*"+size+" for "+iterations+" iterations");
+		  perform(values1, values2, iterations, nbRows);
+	 }
+	 else
+	 {	
+		//do nothing
+		output("No input! Provide 2 matrices to multiply.");
+	 }
     }
     catch(Exception e)
     {
@@ -97,16 +134,16 @@ public class MatrixRunner
    * @param nbRows - number of rows of matrix a per task.
    * @throws Exception if an error is raised during the execution.
    */
-  private static void perform(JSONArray values, final int iterations, final int nbRows) throws Exception
+  private static void perform(double[][] values1, double[][] values2, final int iterations, final int nbRows) throws Exception
   {
     try
     {
       // initialize the 2 matrices to multiply
-      Matrix a = new Matrix(size);
+      Matrix a = new Matrix(values1.length, values1[0].length, values1);
       //a.assignRandomValues();
-      Matrix b = new Matrix(size);
+      Matrix b = new Matrix(values2.length, values2[0].length, values2);
       //b.assignRandomValues();*)
-      if (size <= 500) performSequentialMultiplication(a, b);
+      performSequentialMultiplication(a, b);
       long totalIterationTime = 0L;
 
       // determine whether an execution policy should be used
@@ -175,7 +212,9 @@ public class MatrixRunner
     // submit the tasks for execution
     List<JPPFTask> results = jppfClient.submit(job);
     // initialize the resulting matrix
-    Matrix c = new Matrix(size);
+	int rRows = a.getRows();
+	int rCols = b.getCols();
+    Matrix c = new Matrix(rRows, rCols, new double[rRows][rCols]);
     // Get the matrix values from the tasks results
     int rowIdx = 0;
     for (JPPFTask matrixTask : results) {

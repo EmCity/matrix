@@ -69,13 +69,15 @@ public class MatrixTask extends JPPFTask
     try
     {
       Matrix matrix = (Matrix) getDataProvider().getValue(DATA_KEY);
-      int size = matrix.getSize();
-      result = new double[size];
+      //int size = matrix.getSize();
+	  int rows = matrix.getRows();
+	  int cols = matrix.getCols();
+      result = new double[cols];
 
-      for (int col=0; col<size; col++)
+      for (int col=0; col<cols; col++)
       {
         double sum = 0d;
-        for (int row=0; row<size; row++)
+        for (int row=0; row<rows; row++)
         {
           sum += matrix.getValueAt(row, col) * rowValues[row];
         }

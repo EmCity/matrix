@@ -75,7 +75,7 @@ public class Matrix implements Serializable
    */
   public int getRows()
   {
-    return size;
+    return rows;
   }
   
   public int getCols()
@@ -85,7 +85,7 @@ public class Matrix implements Serializable
 	
   public int getSize()
   {
-	return size+cols/2;
+	return (rows+cols)/2;
   }
   /**
    * Get the row of matrix values at the specified index. Provided as a convenience.
@@ -95,7 +95,7 @@ public class Matrix implements Serializable
    */
   public double[] getRow(final int row)
   {
-    return (row < size) ? values[row] : null;
+    return (row < rows) ? values[row] : null;
   }
 
   /**
@@ -127,14 +127,14 @@ public class Matrix implements Serializable
    */
   public Matrix multiply(final Matrix matrix)
   {
-    if (matrix.rows() != this.cols) return null;
-    Matrix result = new Matrix(this.rows, matrix.cols);
-    for (int i=0; i<size; i++)
+    if (matrix.getRows() != this.cols) return null;
+    Matrix result = new Matrix(this.rows, matrix.getCols(), new double[this.rows][matrix.getCols()]);
+    for (int i=0; i<rows; i++)
     {
-      for (int j=0; j<size; j++)
+      for (int j=0; j<cols; j++)
       {
         double value = 0d;
-        for (int k=0; k< size; k++) value += matrix.getValueAt(k, j) * values[i][k];
+        for (int k=0; k< rows; k++) value += matrix.getValueAt(k, j) * values[i][k];
         result.setValueAt(j, i, value);
       }
     }
@@ -150,7 +150,7 @@ public class Matrix implements Serializable
    */
   public double[] multiplyRow(final int n, final Matrix matrix)
   {
-    double[] result = new double[size];
+    double[] result = new double[cols];
     for (int col=0; col<cols; col++)
     {
       double sum = 0d;

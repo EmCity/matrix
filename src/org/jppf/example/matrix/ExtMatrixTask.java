@@ -54,17 +54,19 @@ public class ExtMatrixTask extends JPPFTask
     try
     {
       final Matrix matrix = (Matrix) getDataProvider().getValue(DATA_KEY);
-      final int size = matrix.getSize();
-      final double[][] computeResult = new double[rowValues.length][size];
+	  //get the data from the provided matrix
+      final int rows = matrix.getRows();
+	  final int cols = matrix.getCols();
+      final double[][] computeResult = new double[rowValues.length][cols];
 
       // for each row of matrix a
       for (int n=0; n<rowValues.length; n++)
       {
         // for each column of matrix b
-        for (int col=0; col<size; col++)
+        for (int col=0; col<cols; col++)
         {
           double sum = 0d;
-          for (int row=0; row<size; row++)
+          for (int row=0; row<rows; row++)
           {
             sum += matrix.getValueAt(row, col) * rowValues[n][row];
           }
