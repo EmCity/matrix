@@ -1,0 +1,399 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01//EN" "http://www.w3.org/TR/html4/transitional.dtd">
+<html>
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="chrome=1">
+		<!-- If Google's chrome frame installed, use it! -->
+		<!-- Comment needs to be BELOW this meta tag! -->
+		<!--
+		//	****************************************************************************
+		//	jWebSocket Hello World (uses jWebSocket Client and Server)
+		//	(C) 2010 Alexander Schulze, jWebSocket.org, Innotrade GmbH, Herzogenrath
+		//	****************************************************************************
+		//	This program is free software; you can redistribute it and/or modify it
+		//	under the terms of the GNU Lesser General Public License as published by the
+		//	Free Software Foundation; either version 3 of the License, or (at your
+		//	option) any later version.
+		//	This program is distributed in the hope that it will be useful, but WITHOUT
+		//	ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+		//	FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for
+		//	more details.
+		//	You should have received a copy of the GNU Lesser General Public License along
+		//	with this program; if not, see <http://www.gnu.org/licenses/lgpl.html>.
+		//	****************************************************************************
+		-->
+		<meta http-equiv="Content-Language" content="en">
+		<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+		<title>Simple websocket client</title>
+		<link rel="stylesheet" type="text/css" href="jwebsocket.css">
+		<!-- load the jWebSocket JavaScript client library -->
+		<script type="text/javascript" src="jWebSocket.js"></script>
+		<!-- this one imports the client side reporting plug-in -->
+		<script type="text/javascript" src="jwsReportingPlugIn.js"></script>
+		<script type="text/javascript" language="JavaScript">
+
+			var eLog = null;
+
+			function log( aString ) {
+				eLog.innerHTML +=
+					aString + "<br>";
+				if( eLog.scrollHeight > eLog.clientHeight ) {
+					eLog.scrollTop = eLog.scrollHeight - eLog.clientHeight;
+				}
+			}
+
+			function clearLog() {
+				eLog.innerHTML = "";
+				eLog.scrollTop = 0;
+			}
+
+			var lWSC = null;
+			// declared globally only to show username also on log off
+			var gUsername = null;
+
+			function logon() {
+				var lURL = jws.getDefaultServerURL();
+
+				gUsername = eUsername.value;
+				var lPassword = ePassword.value;
+				
+				// optionally reset the password to force
+				// re-typing after a disconnect or logout.
+				// ePassword.value = "";
+
+				log( "Connecting to " + lURL + " and logging in as '" + gUsername + "'..." );
+				var lRes = lWSC.logon( lURL, gUsername, lPassword, {
+
+					// OnOpen callback
+					OnOpen: function( aEvent ) {
+						log( "<font style='color:#888'>jWebSocket connection established.</font>" );
+						jws.$("simgStatus").src = "../../images/connected.png";
+					},
+					
+					OnWelcome: function( aEvent )  {
+						log( "<font style='color:red'>jWebSocket Welcome received.</font>" );
+					},
+					
+					OnGoodBye: function( aEvent )  {
+						log( "<font style='color:red'>jWebSocket GoodBye received.</font>" );
+					},
+
+					// OnMessage callback
+					OnMessage: function( aEvent, aToken ) {
+						var lDate = "";
+						if( aToken.date_val ) {
+							lDate = jws.tools.ISO2Date( aToken.date_val );
+						}
+						log( "<font style='color:#888'>jWebSocket '" + aToken.type + "' token received, full message: '" + aEvent.data + "' " + lDate + "</font>" );
+						if( lWSC.isLoggedIn() ) {
+							jws.$("simgStatus").src = "../../images/authenticated.png";
+						} else {
+							jws.$("simgStatus").src = "../../images/connected.png";
+						}
+						jws.$("slblClientId").innerHTML =
+							"&nbsp;Client&#x2011;Id:&nbsp;"
+							+ lWSC.getId() + "&nbsp;"
+							+ ( jws.browserSupportsNativeWebSockets ? "(native)" : "(flashbridge)" );
+							
+						if(aToken.type=="matrix")
+						{
+							setMessage("Matrix received!");
+							var JSONoutput = JSON.parse(aEvent.data);
+							var JSONmatrix = JSONoutput['matrix'];
+							//alert(JSON.stringify(JSONmatrix));
+							writeOutput(JSONmatrix);
+							/*document.location="test.html";*/
+						}
+					},
+					// OnClose callback
+					OnClose: function( aEvent ) {
+						log( "<font style='color:#888'>jWebSocket connection closed.</font>" );
+						jws.$("simgStatus").src = "../../images/disconnected.png";
+						jws.$("slblClientId").innerHTML = "&nbsp;Client&#x2011;Id:&nbsp;-";
+					}
+				});
+
+				log( lWSC.resultToString( lRes ) );
+			}
+
+			function logoff() {
+				if( lWSC ) {
+					log( "Logging off " + ( gUsername != null ? "'" + gUsername + "'" : "" ) + " and disconnecting..." );
+					// the timeout below  is optional,
+					// if you use it you'll get a good-bye message.
+					var lRes = lWSC.close({ timeout: 3000 });
+					log( lWSC.resultToString( lRes ) );
+				}
+			}
+
+			function broadcast() {
+				var lMsg = eMessage.value;
+				if( lMsg.length > 0 ) {
+					log( "Broadcasting '" + lMsg + "'..." );
+					var lRes = lWSC.broadcastText(
+						"",		// broadcast to all clients (not limited to a certain pool)
+						lMsg	// broadcast this message
+					);
+					// you may want log error only,
+					// on success don't confuse the user
+					// if( lRes.code != 0 ) {
+					log( lWSC.resultToString( lRes ) );
+					//  }
+					//
+					// optionally clear message to not accidentally send it twice
+					// eMessage.value = "";
+				}
+			}
+			
+			function broadcastJSON(json_message) {
+				var lMsg = json_message;
+				if( lMsg.length > 0 ) {
+					log( "Broadcasting '" + lMsg + "'..." );
+					var lRes = lWSC.broadcastText(
+						"",		// broadcast to all clients (not limited to a certain pool)
+						lMsg	// broadcast this message
+					);
+					// you may want log error only,
+					// on success don't confuse the user
+					// if( lRes.code != 0 ) {
+					log( lWSC.resultToString( lRes ) );
+					//  }
+					//
+					// optionally clear message to not accidentally send it twice
+					// eMessage.value = "";
+				}
+			}
+
+
+			// example how to request a result from a server side plugin
+			function sampleGetTime() {
+				log( "Requesting server time via WebSockets..." );
+				// call the getTime method of the client side plug-in
+				var lRes = lWSC.requestServerTime();
+				// log error only, on success don't confuse the user
+				if( lRes.code != 0 ) {
+					log( lWSC.resultToString( lRes ) );
+				}
+			}
+
+			function getServerTimeCallback( aToken ) {
+				log( "Server time: " + aToken.time );
+			}
+
+
+			function initPage() {
+				eLog = jws.$( "sdivChat" );
+				eMessage = jws.$( "stxfMessage" );
+				eUsername = jws.$( "stxfUsername" );
+				ePassword = jws.$( "spwfPassword" );
+
+				// jws.browserSupportsWebSockets checks web if sockets are available
+				// either natively, by the Flash Bridge or by the Chrome Frame.
+				if( jws.browserSupportsWebSockets() ) {
+					lWSC = new jws.jWebSocketJSONClient({
+						OnWelcome: ""
+					});
+					lWSC.setSamplesCallbacks({
+						OnSamplesServerTime: getServerTimeCallback
+					});
+					lWSC.setFileSystemCallbacks({
+						OnFileLoaded: onFileLoadedObs,
+						OnFileSaved: onFileSavedObs,
+						OnFileError: onFileErrorObs
+					});
+					eUsername.focus();
+				} else {
+					jws.$( "sbtnLogon" ).setAttribute( "disabled", "disabled" );
+					jws.$( "sbtnLogoff" ).setAttribute( "disabled", "disabled" );
+					jws.$( "sbtnClear" ).setAttribute( "disabled", "disabled" );
+					jws.$( "sbtnBroadcast" ).setAttribute( "disabled", "disabled" );
+					jws.$( "stxfMessage" ).setAttribute( "disabled", "disabled" );
+					jws.$( "stxfUsername" ).setAttribute( "disabled", "disabled" );
+					jws.$( "spwfPassword" ).setAttribute( "disabled", "disabled" );
+
+					var lMsg = jws.MSG_WS_NOT_SUPPORTED;
+					alert( lMsg );
+					log( lMsg );
+				}
+			}
+			
+			function setMessage(message)
+			{
+				var matrixDiv = document.getElementById("matrixTest");
+				matrixDiv.innerHTML = message;
+			}
+
+			function exitPage() {
+				logoff();
+			}
+			
+			function writeOutput(output)
+			{
+				var matrixDiv = document.getElementById("matrixTest");
+				var outputMatrix = ".<br>";
+				
+				var arr_length = numProps(output[0]);
+				
+				for(var i = 0; i<output.length; i++)
+				{
+					for(var j = 0; j<arr_length; j++)
+					{
+						outputMatrix += output[i][j] + " ";
+					}
+					outputMatrix += "<br/>";
+				}
+				outputMatrix += ".";
+				var date = new Date();
+				var endTime = date.getTime();
+				var elapsed = endTime - startTime;
+				setMessage("Done in " + elapsed + "ms.");
+				//matrixDiv.innerHTML = "Done in " + elapsed + "ms.";//outputMatrix;
+			}
+			
+			function numProps(obj) {
+				var c = 0;
+				for (var key in obj) {
+					if (obj.hasOwnProperty(key)) ++c;
+				}
+				return c;
+			}
+			
+			var startTime = 0;
+			function makeMatrix()
+			{
+				var date = new Date();
+				startTime = date.getTime();
+			
+				var matrixA = new Array();
+				var matrixB = new Array();
+				var minValue = 0;
+				var maxValue = 100;
+				
+				setMessage("Please wait..");
+				
+				matrixA[0] = document.getElementById("rowsA").value;
+				matrixA[1] = document.getElementById("columnsA").value;
+				
+				matrixB[0] = document.getElementById("rowsB").value;
+				matrixB[1] = document.getElementById("columnsB").value;
+				
+				//Check that the matrices satisfy a*n X n*b
+				if(matrixA[1]!=matrixB[0])
+				{
+					alert("The matrices must satisfy A*N X N*B");
+					return;
+				}
+				
+				var outputMatrix = "";
+				//Generate random numbers for two matrices
+				
+				var MatrixA = new Array();
+				for(var i = 0; i < matrixA[0]; i++)
+				{
+					MatrixA[i] = {};
+					for(var j = 0; j < matrixA[1]; j++)
+					{
+						var randomnumber=Math.floor(Math.random()*maxValue);
+						MatrixA[i][j] = randomnumber;
+						//outputMatrix += randomnumber + " ";
+					}
+					//outputMatrix += "<br/>";
+				}
+				//matrixDiv.innerHTML = outputMatrix;
+				
+				var JSONString = JSON.stringify(MatrixA);
+				
+				setMessage("Sending matrix");
+				broadcastJSON(JSONString);
+				setMessage("Matrix sent, waiting for reply..");
+				delete MatrixA;
+				delete JSONString;
+			}
+
+		</script>
+	</head>
+
+	<body
+		onload="initPage();"
+		onunload="exitPage();"
+		>
+		<table class="tblHeader" width="100%" cellspacing="0" cellpadding="0">
+			<tr>
+				<td class="tdHeader" width="">jWebSocket simple implementation</td>
+				<td class="tdHeader" width="1%"><img id="simgStatus" src="../../images/disconnected.png" align="right"/></td>
+				<td class="tdHeader" width="1%"><span id="slblClientId">&nbsp;Client&#x2011;Id:&nbsp;-</span></td>
+			</tr>
+		</table>
+		<p>Hey what's happening dude. Log in and send a message!
+		</p>
+		<div id="sdivChat" class="sdivContainer"
+			 style="position:relative; height:100px; overflow:auto;">
+		</div>
+		<div class="sdivContainer">
+			<table class="stlbDlg" border="0" cellpadding="3" cellspacing="0" width="100%">
+				<tr class="strDlg">
+					<td class="stdDlg" width="5">Username</td>
+					<td class="stdDlg" width="5">
+						<input class="stxfDlg" id="stxfUsername" type="text" value="root" style="width:150px"
+							   title="jWebSocket username or 'root' for demo.">
+					</td>
+					<td class="stdDlg" width="5">
+						<input class="sbtnDlg" id="sbtnLogon" type="button" value="Login" onclick="logon();"
+							   title="Authenticates you against the jWebSocket Server.">
+					</td>
+					<td class="stdDlg" width="5">
+						<input class="sbtnDlg" id="sbtnClear" type="button" value="Clear Log" onclick="clearLog();"
+							   title="Clears the result and event log above.">
+					</td>
+					
+					
+				</tr>
+				<tr class="strDlg">
+					<td class="stdDlg" width="5">Password</td>
+					<td class="stdDlg" width="5">
+						<input class="spwfDlg" id="spwfPassword" type="password" value="root" style="width:150px"
+							   title="jWebSocket password or 'root' for demo.">
+					</td>
+					<td class="stdDlg" width="5">
+						<input class="sbtnDlg" id="sbtnLogoff" type="button" value="Logout" onclick="logoff();"
+							   title="Logs you out and disconnects from the jWebSocket server.">
+					</td>
+					<td class="stdDlg" width="5">
+						<input class="sbtnDlg" id="sbtnBroadcast" type="button" value="Broadcast" onclick="broadcast();"
+							   title="Broadcasts the message below to all connected clients.">
+					</td>
+					<td class="stdDlg" width="5">
+						<input class="sbtnDlg" id="sbtnGetTime" type="button" value="GetTime" onclick="sampleGetTime();"
+							   title="Retreives the current system time from the jWebSocket server.">
+					</td>
+					
+					
+				</tr>
+				<tr class="strDlg">
+					<td class="stdDlg" width="5">Message</td>
+					<td class="stdDlg" width="" colspan="7">
+						<input class="stxfDlg" id="stxfMessage" type="text" value="Your Message" style="width:99%"
+							   title="Message to be broadcasted or save to file on the jWebSocket Server.">
+					</td>
+				</tr>
+			</table>
+		</div>
+		
+		<h1>Matrix multiplication</h1>
+			<form method="post" id="generate">
+				
+				Please insert the dimensions of the matrices you want to multiply as AxB<br/>
+				Matrix A:<br/>
+				<input type="text" id="rowsA" size="5"/> x 
+				<input type="text" id="columnsA" size="5"/><br/>
+				Matrix B:<br/>
+				<input type="text" id="rowsB" size="5"/> x 
+				<input type="text" id="columnsB" size="5"/><br/>
+				<input type="button" value=" Generate " onClick="javascript:makeMatrix()"/>
+
+			</form>
+			
+		<div id = "matrixTest">
+		Output
+		</div>
+	</body>
+</html>
