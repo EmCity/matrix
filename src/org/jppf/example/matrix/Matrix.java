@@ -162,4 +162,18 @@ public class Matrix implements Serializable
     }
     return result;
   }
+  
+  public void printConsole()
+  {
+		JSONArray list = new JSONArray();
+		for(int i = 0; i < rows; i++)
+		{	
+			JSONObject obj = new JSONObject();
+			for(int j = 0; j < cols; j++)
+			{
+				obj.put(values[i][j]);
+			}
+			list.add(obj);
+		}
+  }
 }

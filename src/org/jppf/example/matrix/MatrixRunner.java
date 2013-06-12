@@ -51,7 +51,7 @@ public class MatrixRunner
    * The size of the matrices is specified as a configuration property named &quot;matrix.size&quot;.<br>
    * @param args - not used.
    */
-  public static void main(final String...args)
+  public static String[] go(String[] input)
   {
     try
     {
@@ -59,14 +59,16 @@ public class MatrixRunner
       jppfClient = new JPPFClient();
 	  JSONArray array;
 	  JSONArray array2;
-	  String input1 = "[{\"0\":44, \"1\":22}, {\"0\":1, \"1\":3}]";
-	  String input2 = "[{\"0\":10, \"1\":44}, {\"0\":2, \"1\":6}]";
-	  
+	  //String input1 = "[{\"0\":44, \"1\":22}, {\"0\":1, \"1\":3}]";
+	  //String input2 = "[{\"0\":10, \"1\":44}, {\"0\":2, \"1\":6}]";
+	  if ((args != null) && (args.length > 1))
+	  {
+	 
 		output("Heeello");
 		//here is the JSON with the matrix values
-		Object obj=JSONValue.parse(input1);
+		Object obj=JSONValue.parse(input[1]);
 		array=(JSONArray)obj;
-		Object obj2=JSONValue.parse(input2);
+		Object obj2=JSONValue.parse(input[2]);
 		array2=(JSONArray)obj2;
 		  
 		  //Get the single elements of the JSON and thus be able to find out number of rows and columns
@@ -125,8 +127,19 @@ public class MatrixRunner
 		  //number of rows of matrix a per task
 		  int nbRows = props.getInt("task.nbRows", 1);
 		  output("Running Matrix demo with matrix size = "+size+"*"+size+" for "+iterations+" iterations");
-		  perform(values1, values2, iterations, nbRows);
-	 
+		  Matrix c = perform(values1, values2, iterations, nbRows);
+		  String[] result = new String[2];
+		  result[0] = input[0];
+		  result[1] = c.printConsole(),
+		  return result;
+		  }
+		  else
+		  {
+		    String[] result = new String[2];
+			result[0] = input[0];
+			result[1] = "Nothing";
+			return result;
+		  }
     }
     catch(Exception e)
     {
@@ -145,7 +158,7 @@ public class MatrixRunner
    * @param nbRows - number of rows of matrix a per task.
    * @throws Exception if an error is raised during the execution.
    */
-  private static void perform(double[][] values1, double[][] values2, final int iterations, final int nbRows) throws Exception
+  private static Matrix perform(double[][] values1, double[][] values2, final int iterations, final int nbRows) throws Exception
   {
     try
     {
@@ -166,13 +179,14 @@ public class MatrixRunner
         policy = PolicyParser.parsePolicy(s);
       }
       // perform "iteration" times
+	  Matrix c;
       for (int iter=0; iter<iterations; iter++)
       {
-        long elapsed = performParallelMultiplication(a, b, nbRows, policy);
+        c = performParallelMultiplication(a, b, nbRows, policy);
         totalIterationTime += elapsed;
         output("Iteration #" + (iter+1) + " performed in " + StringUtils.toStringDuration(elapsed));
       }
-      output("Average iteration time: " + StringUtils.toStringDuration(totalIterationTime / iterations));
+      //output("Average iteration time: " + StringUtils.toStringDuration(totalIterationTime / iterations));
       /*
 			if (JPPFConfiguration.getProperties().getBoolean("jppf.management.enabled"))
 			{
@@ -180,6 +194,7 @@ public class MatrixRunner
 				output("End statistics :\n" + stats.toString());
 			}
        */
+	   return c;
     }
     catch(Exception e)
     {
@@ -196,15 +211,15 @@ public class MatrixRunner
    * @return the elapsed time for the computation.
    * @throws Exception if an error is raised during the execution.
    */
-  private static long performParallelMultiplication(final Matrix a, final Matrix b, final int nbRows, final ExecutionPolicy policy) throws Exception
+  private static Matrix performParallelMultiplication(final Matrix a, final Matrix b, final int nbRows, final ExecutionPolicy policy) throws Exception
   {
     long start = System.currentTimeMillis();
-    int size = a.getSize();
+    //int size = a.getSize();
     // create a task for each row in matrix a
     JPPFJob job = new JPPFJob();
     job.setName("matrix sample " + (iterationsCount++));
-    int remaining = size;
-    for (int i=0; i<size; i+= nbRows)
+    int remaining = a.getRows();
+    for (int i=0; i<a.getRows(); i+= nbRows)
     {
       double[][] rows = null;
       if (remaining >= nbRows)
@@ -232,11 +247,13 @@ public class MatrixRunner
       if (matrixTask.getException() != null) throw matrixTask.getException();
       double[][] rows = (double[][]) matrixTask.getResult();
       for (int j = 0; j < rows.length; j++) {
-        for (int k = 0; k < size; k++) c.setValueAt(rowIdx + j, k, rows[j][k]);
+        for (int k = 0; k < rCols; k++) c.setValueAt(rowIdx + j, k, rows[j][k]);
       }
       rowIdx += rows.length;
     }
-    return System.currentTimeMillis() - start;
+	output("Parallel");
+	return c;
+    //return System.currentTimeMillis() - start;
   }
 
   /**
@@ -247,7 +264,9 @@ public class MatrixRunner
   private static void performSequentialMultiplication(final Matrix a, final Matrix b)
   {
     long start = System.currentTimeMillis();
-    a.multiply(b);
+    Matrix c = a.multiply(b);
+	output("Sequential");
+	c.printConsole();
     long elapsed = System.currentTimeMillis() - start;
     output("Sequential computation performed in "+StringUtils.toStringDuration(elapsed));
   }
