@@ -29,8 +29,7 @@
 	<property name="classes.dir" value="${basedir}/classes"/>	
 	<property name="src.dir"     value="${basedir}/src"/>
 	<property name="javadoc"     value="${basedir}/javadoc"/>
-	<property name="result.file" value="CustomLoadBalancer.jar"/>
-	
+
 	<!-- ========================================================================= -->
 	<!--                           Classpath definitions                           -->
 	<!-- ========================================================================= -->
@@ -78,24 +77,10 @@
 		</javac>
 		<copy todir="${classes.dir}">
 			<fileset dir="${src.dir}">
-				<exclude name="**/*.java"/>
 				<exclude name="**/package.html"/>
 			</fileset>
 		</copy>
-	</target>
-
-  	<!-- ========================================================================= -->
-	<!--                                  Jar                                      -->
-	<!-- ========================================================================= -->
-
-	<target name="jar" depends="compile">
-	  <jar jarfile="${result.file}" index="true">
-			<fileset dir="${classes.dir}"/>
-	  </jar>
-		<echo/>
-		<echo message="*** The file ${result.file} is now ready to be deployed ***"/>
-		<echo/>
-	</target>
+  </target>
 
 	<!-- ========================================================================= -->
 	<!--                     Run the sample application                            -->
@@ -104,7 +89,6 @@
 	<target name="run">
 		<echo message="starting the Matrix Multiplication application"/>
 		<java fork="yes" classname="org.jppf.example.matrix.MatrixRunner" classpathref="project.classpath">
-			<jvmarg value="-server"/>
 			<jvmarg value="-Xmx256m"/>
 			<jvmarg value="-Djppf.config=jppf-client.properties"/>
 			<jvmarg value="-Dlog4j.configuration=log4j-client.properties"/>
@@ -141,10 +125,7 @@
 			</bottom>
 		</javadoc>
 		<copy todir="${javadoc}/resources" overwrite="true">
-			<fileset dir="${shared.img}">
-				<include name="logo2.gif"/>
-				<include name="inherit.gif"/>
-			</fileset>
+			<fileset dir="${shared.img}" includes="inherit.gif"/>
 		</copy>
 	</target>
 

@@ -1,0 +1,16 @@
+<ExecutionPolicy>
+   <!-- define a policy that requires both rules to be satisfied -->
+   <AND>
+     <!-- define a policy allowing only nodes with 2 processing threads or more -->
+     <AtLeast>
+       <Property>processing.threads</Property>
+       <Value>2</Value>
+     </AtLeast>
+     <!-- define a policy allowing only nodes that are part of the "mydomain.com"
+     internet domain (case ignored)
+     <Contains ignoreCase="true">
+       <Property>ipv4.addresses</Property>
+       <Value>mydomain.com</Value>
+     </Contains> -->
+   </AND>
+ </ExecutionPolicy>
