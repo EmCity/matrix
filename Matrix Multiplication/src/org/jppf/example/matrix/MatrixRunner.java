@@ -39,11 +39,11 @@ public class MatrixRunner
   /**
    * JPPF client used to submit execution requests.
    */
-  private static JPPFClient jppfClient = null;
+  private JPPFClient jppfClient = null;
   /**
    * Keeps track of the current iteration number.
    */
-  private static int iterationsCount = 0;
+  private int iterationsCount = 0;
 
   /**
    * Entry point for this class, performs a matrix multiplication a number of times.,<br>
@@ -51,7 +51,7 @@ public class MatrixRunner
    * The size of the matrices is specified as a configuration property named &quot;matrix.size&quot;.<br>
    * @param args - not used.
    */
-  public static String[] go(String[] input)
+  public String[] go(String[] input)
   {
     try
     {
@@ -61,7 +61,7 @@ public class MatrixRunner
 	  JSONArray array2;
 	  //String input1 = "[{\"0\":44, \"1\":22}, {\"0\":1, \"1\":3}]";
 	  //String input2 = "[{\"0\":10, \"1\":44}, {\"0\":2, \"1\":6}]";
-	  if ((args != null) && (args.length > 1))
+	  if (input[1] != null & input[2] != null)
 	  {
 	 
 		output("Heeello");
@@ -129,25 +129,28 @@ public class MatrixRunner
 		  output("Running Matrix demo with matrix size = "+size+"*"+size+" for "+iterations+" iterations");
 		  Matrix c = perform(values1, values2, iterations, nbRows);
 		  String[] result = new String[2];
+		  output("Array created");
 		  result[0] = input[0];
-		  result[1] = c.printConsole(),
+		  result[1] = c.printConsole();
+		  if (jppfClient != null) jppfClient.close();
 		  return result;
 		  }
 		  else
 		  {
+			output("No input");
 		    String[] result = new String[2];
 			result[0] = input[0];
 			result[1] = "Nothing";
+			if (jppfClient != null) jppfClient.close();
 			return result;
 		  }
     }
     catch(Exception e)
     {
       e.printStackTrace();
-    }
-    finally
-    {
-      if (jppfClient != null) jppfClient.close();
+	  output("catch");
+	  if (jppfClient != null) jppfClient.close();
+	  return null;
     }
   }
 
@@ -158,7 +161,7 @@ public class MatrixRunner
    * @param nbRows - number of rows of matrix a per task.
    * @throws Exception if an error is raised during the execution.
    */
-  private static Matrix perform(double[][] values1, double[][] values2, final int iterations, final int nbRows) throws Exception
+  private Matrix perform(double[][] values1, double[][] values2, final int iterations, final int nbRows) throws Exception
   {
     try
     {
@@ -179,12 +182,12 @@ public class MatrixRunner
         policy = PolicyParser.parsePolicy(s);
       }
       // perform "iteration" times
-	  Matrix c;
+	  Matrix c = null;
       for (int iter=0; iter<iterations; iter++)
       {
         c = performParallelMultiplication(a, b, nbRows, policy);
-        totalIterationTime += elapsed;
-        output("Iteration #" + (iter+1) + " performed in " + StringUtils.toStringDuration(elapsed));
+        //totalIterationTime += elapsed;
+        //output("Iteration #" + (iter+1) + " performed in " + StringUtils.toStringDuration(elapsed));
       }
       //output("Average iteration time: " + StringUtils.toStringDuration(totalIterationTime / iterations));
       /*
@@ -211,7 +214,7 @@ public class MatrixRunner
    * @return the elapsed time for the computation.
    * @throws Exception if an error is raised during the execution.
    */
-  private static Matrix performParallelMultiplication(final Matrix a, final Matrix b, final int nbRows, final ExecutionPolicy policy) throws Exception
+  private Matrix performParallelMultiplication(final Matrix a, final Matrix b, final int nbRows, final ExecutionPolicy policy) throws Exception
   {
     long start = System.currentTimeMillis();
     //int size = a.getSize();
@@ -261,7 +264,7 @@ public class MatrixRunner
    * @param a - the left-hand matrix.
    * @param b - the right-hand matrix.
    */
-  private static void performSequentialMultiplication(final Matrix a, final Matrix b)
+  private void performSequentialMultiplication(final Matrix a, final Matrix b)
   {
     long start = System.currentTimeMillis();
     Matrix c = a.multiply(b);
@@ -275,7 +278,7 @@ public class MatrixRunner
    * Print a message to the console and/or log file.
    * @param message - the message to print.
    */
-  private static void output(final String message)
+  private void output(final String message)
   {
     System.out.println(message);
     log.info(message);

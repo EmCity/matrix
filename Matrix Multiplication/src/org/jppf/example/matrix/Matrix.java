@@ -18,6 +18,7 @@
 package org.jppf.example.matrix;
 
 import java.io.Serializable;
+import org.json.simple.*;
 //import java.util.Random;
 
 /**
@@ -163,7 +164,7 @@ public class Matrix implements Serializable
     return result;
   }
   
-  public void printConsole()
+  public String printConsole()
   {
 		JSONArray list = new JSONArray();
 		for(int i = 0; i < rows; i++)
@@ -171,9 +172,10 @@ public class Matrix implements Serializable
 			JSONObject obj = new JSONObject();
 			for(int j = 0; j < cols; j++)
 			{
-				obj.put(values[i][j]);
+				obj.put(String.valueOf(j), values[i][j]);
 			}
 			list.add(obj);
 		}
+		return list.toJSONString();
   }
 }

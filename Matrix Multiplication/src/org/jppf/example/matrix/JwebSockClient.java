@@ -1,3 +1,5 @@
+package org.jppf.example.matrix;
+
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
 import java.util.Iterator;
@@ -6,10 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jetty.websocket.WebSocketConnection;
-import org.json.JSONObject;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONValue;
+import org.json.simple.*;
+
 import org.json.simple.parser.ContainerFactory;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -24,7 +24,6 @@ import org.jwebsocket.listener.WebSocketServerTokenListener;
 import org.jwebsocket.server.TokenServer;
 import org.jwebsocket.token.Token;
 
-import com.mongodb.util.JSON;
 
 public class JwebSockClient
     implements WebSocketServerTokenListener
@@ -95,11 +94,18 @@ public class JwebSockClient
             System.out.println("matrices size:  " + matrices.size());
             
             Object JSONStringA = matrices.get( 0 );
+			System.out.println("011");
+			/*JSONObject object1 = (JSONObject) JSONStringA;
+			System.out.println("012");
+			System.out.println(object1.toJSONString());
+			*/
             JSONArray matrixA = (JSONArray) JSONStringA;
             System.out.println("matrixA size: "+matrixA.size());
+			System.out.println("02");
             Object JSONStringB = matrices.get( 1 );
+			System.out.println("03");
             JSONArray matrixB = (JSONArray) JSONStringB;
-            
+            System.out.println("04");
             doMatrixMultiplication(matrixA, matrixB, packetData[0]);
         }
         
@@ -112,12 +118,30 @@ public class JwebSockClient
         String[] packetData = new String[3]; //[0] == ID, [1] == matrixStringA [2] =matrixB
         String matrixa = matrixA.toJSONString();
         String matrixb = matrixB.toJSONString();
+		System.out.println("05");
         packetData[0] = id;
         packetData[1] = matrixa;
         packetData[2] = matrixb;
         String[] resultData = new String[2];
-        resultData = go(packetData);
-        
+		System.out.println("01");
+		MatrixRunner runner = new MatrixRunner();
+		System.out.println("012a");
+        resultData = runner.go(packetData);
+        System.out.println("012b");
+		if(resultData!=null)
+		{
+			System.out.println(resultData.length);
+		}
+		else System.out.println("array is null");
+		
+		if(resultData[0] == null)
+		{
+			System.out.println("result0: null");
+		}
+		
+		
+		//System.out.println("result0: "+resultData[0]);
+		System.out.println("result1: "+resultData[1]);
         sendProcessedMatrix(resultData);
     }
 
